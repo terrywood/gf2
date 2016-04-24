@@ -1,6 +1,7 @@
 package app;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.annotation.ThreadSafe;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -23,8 +24,8 @@ public class MoneyListen implements Runnable {
     public  String dseSessionId = null;
     public  double buy;
     public  double sale;
-
-
+    PoolingHttpClientConnectionManager cm ;
+    CloseableHttpClient httpclient ;
     public MoneyListen(String cow,
                        String beer
             ,BasicCookieStore cookieStore,
@@ -38,20 +39,25 @@ public class MoneyListen implements Runnable {
         this.dseSessionId = dseSessionId;
         this.buy= buy;
         this.sale= sale;
+
+        cm = new PoolingHttpClientConnectionManager();
+        cm.setMaxTotal(10);
+        httpclient = HttpClients.custom()
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(userAgent)
+                .setConnectionManager(cm).build();
     }
 
     @Override
     public void run() {
-
         try {
             long c2 = System.currentTimeMillis();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-            cm.setMaxTotal(6);
-            CloseableHttpClient httpclient = HttpClients.custom()
+
+        /*    CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
                     .setConnectionManager(cm).build();
-
+*/
             String[] urisToGet = {
                     "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+cow+"&dse_sessionId="+dseSessionId,
                     "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+beer+"&dse_sessionId="+dseSessionId
@@ -90,7 +96,11 @@ public class MoneyListen implements Runnable {
                 Thread.sleep(1000);
             }
 
-            System.out.println(" times:" +(System.currentTimeMillis()-c2));
+
+           // trading("1",upSalePrice, downSalePrice);
+           // trading("2",upBuyPrice, downBuyPrice);
+
+            System.out.println(cow+" and "+beer+" times:" +(System.currentTimeMillis()-c2));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -103,10 +113,10 @@ public class MoneyListen implements Runnable {
    private synchronized void trading(String bs,double upPrice, double downPrice){
       //  String dseSessionId = TraderGFService.dseSessionId;
        // BasicCookieStore cookieStore = TraderGFService.cookieStore;
-        CloseableHttpClient httpclient = HttpClients.custom()
+      /*  CloseableHttpClient httpclient = HttpClients.custom()
                 .setDefaultCookieStore(cookieStore)
                 .setUserAgent(userAgent)
-                .build();
+                .build();*/
         try {
             HttpUriRequest trader = RequestBuilder.post()
                     .setUri(new URI("https://etrade.gf.com.cn/entry"))

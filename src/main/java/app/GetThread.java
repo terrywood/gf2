@@ -37,14 +37,16 @@ public class GetThread  extends Thread{
             CloseableHttpResponse response = httpClient.execute(httpget, context);
             try {
                 String result = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
+                System.out.println(result);
                 Map map = gson.fromJson(result, Map.class);
                 Map data = (Map) ((List) map.get("data")).get(0);
-                System.out.println(data.get("stock_name"));
+                //System.out.println(data.get("stock_name"));
                 this.data = data;
             } finally {
                 response.close();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println(id + " - error: " + e);
         }
     }

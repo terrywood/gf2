@@ -55,11 +55,37 @@ public class TraderGFService implements  InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         this.cookieStore = new BasicCookieStore();
-        if(login()) //balance();
-        pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
-        pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
-    }
+        if(login()){
+            pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
+         //   pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
 
+          //  balance();
+        }
+     }
+
+    public void balance(){
+       String url ="https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.StockUF2Control&method=queryFund&dse_sessionId="+dseSessionId+"&_dc=1461512091606";
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(userAgent)
+                .build();
+        HttpGet httpGet = new HttpGet(url);
+        CloseableHttpResponse response3 = null;
+        try {
+            response3 = httpclient.execute(httpGet);
+           // HttpEntity entity3 = response3.getEntity();
+            //System.out.println(EntityUtils.toString(entity3));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        balance();
+    }
 
     public boolean login() {
         boolean isOk = false;
