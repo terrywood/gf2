@@ -1,5 +1,3 @@
-package app;
-
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
@@ -15,37 +13,26 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Component
-public class ScheduledBedTasks {
-    //@Value("cookie")
-
-    /*
-        @Scheduled(fixedRate = 1000)
-        public void reportCurrentTime() {
-            System.out.println("The time is now " + dateFormat.format(new Date()));
-        }*/
-
-    @Scheduled(fixedRate = 1)
+public class Scheduled300Tasks {
+   // @Scheduled(fixedRate = 1)
     public void checkData() throws IOException, InterruptedException {
+
         long c1 = System.currentTimeMillis();
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
         cm.setMaxTotal(10);
         CloseableHttpClient httpclient = HttpClients.custom().setConnectionManager(cm).build();
         try {
             String[] urisToGet = {
-                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878004&dse_sessionId=" + Constants.gfSession,
-                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878005&dse_sessionId=" + Constants.gfSession
+                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878002&dse_sessionId=" + Constants.gfSession,
+                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878003&dse_sessionId=" + Constants.gfSession
             };
             GetThread[] threads = new GetThread[2];
             for (int i = 0; i < threads.length; i++) {
@@ -73,15 +60,15 @@ public class ScheduledBedTasks {
             double saleTotal = upSalePrice + downSalePrice;
             if (saleTotal < 1.997d) {
                 this.buy(upSalePrice, downSalePrice);
-                System.out.println("Buy：S+[" + String.valueOf(saleTotal) + "]　  code[878004,878005]");
+                System.out.println("Buy：S+[" + String.valueOf(saleTotal) + "]　  code[878002,878003]");
                 System.out.println("upData->" + upData);
                 System.out.println("downData->" + downData);
                 System.out.println("-------------------------------------------------");
                 Thread.sleep(1000);
             } else if (buyTotal > 2.003d) {
-                // this.sale(upBuyPrice, downBuyPrice);
+                 //this.sale(upBuyPrice, downBuyPrice);
 
-                System.out.println("Sale：S+[" + String.valueOf(saleTotal) + "]　B+[" + String.valueOf(buyTotal) + "] code[878004,878005]");
+                System.out.println("Sale：S+[" + String.valueOf(saleTotal) + "]　B+[" + String.valueOf(buyTotal) + "] code[878002,878003]");
                 // System.out.println("upData->"+upData);
                 //System.out.println("downData->"+downData);
                 // System.out.println("-------------------------------------------------");
@@ -107,10 +94,10 @@ public class ScheduledBedTasks {
             formparams.add(new BasicNameValuePair("classname", "com.gf.etrade.control.NXBUF2Control"));
             formparams.add(new BasicNameValuePair("method", "nxbdoubleentrust"));
             formparams.add(new BasicNameValuePair("dse_sessionId", Constants.gfSession));
-            formparams.add(new BasicNameValuePair("fund_code", "878004"));
+            formparams.add(new BasicNameValuePair("fund_code", "878002"));
             formparams.add(new BasicNameValuePair("entrust_amount", "1000"));
             formparams.add(new BasicNameValuePair("entrust_price", String.valueOf(upPrice)));
-            formparams.add(new BasicNameValuePair("fund_code_1", "878005"));
+            formparams.add(new BasicNameValuePair("fund_code_1", "878003"));
             formparams.add(new BasicNameValuePair("entrust_amount_1", "1000"));
             formparams.add(new BasicNameValuePair("entrust_price_1", String.valueOf(downPrice)));
             formparams.add(new BasicNameValuePair("entrust_bs", "2"));
@@ -118,7 +105,7 @@ public class ScheduledBedTasks {
             httpPost.setEntity(entity);
             response = httpclient.execute(httpPost);
             String responseBody = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
-            System.out.println("878004[" + upPrice + "] 878005[" + downPrice + "]");
+            System.out.println("878002[" + upPrice + "] 878003[" + downPrice + "]");
             System.out.println(responseBody);
             EntityUtils.consume(entity);
         } catch (IOException e) {
@@ -141,10 +128,10 @@ public class ScheduledBedTasks {
             formparams.add(new BasicNameValuePair("classname", "com.gf.etrade.control.NXBUF2Control"));
             formparams.add(new BasicNameValuePair("method", "nxbdoubleentrust"));
             formparams.add(new BasicNameValuePair("dse_sessionId", Constants.gfSession));
-            formparams.add(new BasicNameValuePair("fund_code", "878004"));
+            formparams.add(new BasicNameValuePair("fund_code", "878002"));
             formparams.add(new BasicNameValuePair("entrust_amount", "1000"));
             formparams.add(new BasicNameValuePair("entrust_price", String.valueOf(upPrice)));
-            formparams.add(new BasicNameValuePair("fund_code_1", "878005"));
+            formparams.add(new BasicNameValuePair("fund_code_1", "878003"));
             formparams.add(new BasicNameValuePair("entrust_amount_1", "1000"));
             formparams.add(new BasicNameValuePair("entrust_price_1", String.valueOf(downPrice)));
             formparams.add(new BasicNameValuePair("entrust_bs", "1"));
@@ -152,7 +139,7 @@ public class ScheduledBedTasks {
             httpPost.setEntity(entity);
             response = httpclient.execute(httpPost);
             String responseBody = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
-            System.out.println("878004[" + upPrice + "] 878005[" + downPrice + "]");
+            System.out.println("878002[" + upPrice + "] 878003[" + downPrice + "]");
             System.out.println(responseBody);
         } catch (IOException e) {
             e.printStackTrace();
@@ -177,11 +164,13 @@ public class ScheduledBedTasks {
             this.httpget = httpget;
             this.id = id;
         }
+
         public void run() {
             try {
                 CloseableHttpResponse response = httpClient.execute(httpget, context);
                 try {
-                    Map map = gson.fromJson(IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8), Map.class);
+                    String result = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
+                    Map map = gson.fromJson(result, Map.class);
                     Map data = (Map) ((List) map.get("data")).get(0);
                     System.out.println(data.get("stock_name"));
                     this.data = data;
@@ -192,6 +181,7 @@ public class ScheduledBedTasks {
                 System.out.println(id + " - error: " + e);
             }
         }
+
     }
 
 }

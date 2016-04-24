@@ -18,6 +18,8 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -36,88 +38,31 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 @Service("TraderService")
 public class TraderGFService implements  InitializingBean {
     private static final Logger log = LoggerFactory.getLogger(TraderGFService.class);
-    String userAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)";
+    public static  String userAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)";
+    public   BasicCookieStore cookieStore;
+    public   String dseSessionId = null;
 
-    BasicCookieStore cookieStore;
-    String dseSessionId = null;
+    ExecutorService pool = Executors.newFixedThreadPool(4);
+
+
     @Override
     public void afterPropertiesSet() throws Exception {
         this.cookieStore = new BasicCookieStore();
-
+        if(login()) //balance();
+        pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
+        pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
     }
 
-   // @Scheduled(cron = "0/10 20 9,15 * * ?")
-    public void balance() throws IOException {
 
-        long c2 = System.currentTimeMillis();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(10);
-        CloseableHttpClient httpclient = HttpClients.custom()
-                .setDefaultCookieStore(cookieStore)
-                .setUserAgent(userAgent)
-                .setConnectionManager(cm).build();
-        try {
-            String[] urisToGet = {
-                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878002&dse_sessionId=" + dseSessionId,
-                    "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=878003&dse_sessionId=" +dseSessionId
-            };
-            GetThread[] threads = new GetThread[2];
-            for (int i = 0; i < threads.length; i++) {
-                HttpGet httpget = new HttpGet(urisToGet[i]);
-                threads[i] = new GetThread(httpclient, httpget, i + 1);
-            }
-            // start the threads
-            for (int j = 0; j < threads.length; j++) {
-                threads[j].start();
-            }
-            // join the threads
-            for (int j = 0; j < threads.length; j++) {
-               threads[j].join();
-            }
-
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            httpclient.close();
-        }
-    }
-    static class GetThread extends Thread {
-        Gson gson = new Gson();
-        private final CloseableHttpClient httpClient;
-        private final HttpContext context;
-        private final HttpGet httpget;
-        private final int id;
-        private Map data;
-        public Map getData() {
-            return data;
-        }
-        public GetThread(CloseableHttpClient httpClient, HttpGet httpget, int id) {
-            this.httpClient = httpClient;
-            this.context = new BasicHttpContext();
-            this.httpget = httpget;
-            this.id = id;
-        }
-        public void run() {
-            try {
-                CloseableHttpResponse response = httpClient.execute(httpget, context);
-                try {
-                    String ret = EntityUtils.toString(response.getEntity());
-                    System.out.println(ret);
-                } finally {
-                    response.close();
-                }
-            } catch (Exception e) {
-                System.out.println(id + " - error: " + e);
-            }
-        }
-    }
-    public void login() {
+    public boolean login() {
+        boolean isOk = false;
         try {
             long start = System.currentTimeMillis();
             CloseableHttpClient httpclient = HttpClients.custom()
@@ -125,16 +70,14 @@ public class TraderGFService implements  InitializingBean {
                     .setUserAgent(userAgent)
                     .build();
             try {
-                HttpGet httpGet = new HttpGet("https://trade.gf.com.cn/yzm.jpgx");
+                HttpGet httpGet = new HttpGet("https://etrade.gf.com.cn/yzm.jpgx");
                 CloseableHttpResponse response3 = httpclient.execute(httpGet);
                 HttpEntity entity3 = response3.getEntity();
                 File file = new File("d:/gf.jpg");
                 FileUtils.copyInputStreamToFile(entity3.getContent(),file);
                // BufferedImage image = ImageIO.read(entity3.getContent());
                 EntityUtils.consume(entity3);
-
                 String capthca = null;
-
                 {
                     InputStream inputStream = System.in;
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -142,7 +85,7 @@ public class TraderGFService implements  InitializingBean {
                     capthca = bufferedReader.readLine();
 
                     HttpUriRequest login = RequestBuilder.post()
-                            .setUri(new URI("https://trade.gf.com.cn/login"))
+                            .setUri(new URI("https://etrade.gf.com.cn/login"))
                             .addParameter("username", "*1B*8DJo*0FJd*D9*28rq*5E*FF*8Fj*9EG*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00")
                             .addParameter("password", "*E1*B58F*23*B7*C6*2E*05*3F*E6*5D*09*C2*122G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00")
                             .addParameter("tmp_yzm", capthca)
@@ -158,7 +101,6 @@ public class TraderGFService implements  InitializingBean {
                         HttpEntity entity = response2.getEntity();
                       //  System.out.println("Login form get: " + response2.getStatusLine());
                      //   String result = IOUtils.toString(entity.getContent(), "UTF-8");
-
                         System.out.println("result:" + EntityUtils.toString(entity));
                         EntityUtils.consume(entity);
                         System.out.println("Post logon cookies:");
@@ -174,18 +116,12 @@ public class TraderGFService implements  InitializingBean {
                                 //cookieStore.addCookie(cookies.get(i));
                                 System.out.println("- " + cookies.get(i).toString());
                             }
+                            isOk = true;
                         }
                     } finally {
                         response2.close();
                     }
                 }
-
-
-
-
-
-
-
             } finally {
                 httpclient.close();
             }
@@ -194,23 +130,28 @@ public class TraderGFService implements  InitializingBean {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return isOk;
     }
 
 
-
+/*
     public static void main(String[] args) throws ParseException, IOException {
+        //BasicConfigurator.configure();
+        String log4jConfPath = "D:\\dev\\workspace\\gf2\\src\\main\\resources\\log4j.properties";
+        PropertyConfigurator.configure(log4jConfPath);
+
         TraderGFService service = new TraderGFService();
         try {
             service.afterPropertiesSet();
-            service.login();
-            service.balance();
+         *//*   service.login();
+            service.balance();*//*
         } catch (URISyntaxException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-    }
+    }*/
 
  /*   @CacheEvict(value="trader",key="#id")
     public void delete(Long id){
