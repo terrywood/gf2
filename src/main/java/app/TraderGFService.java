@@ -95,7 +95,6 @@ public class TraderGFService implements  InitializingBean {
                             .addParameter("loginType", "2")
                             .addParameter("origin", "web")
                             .build();
-
                     CloseableHttpResponse response2 = httpclient.execute(login);
                     try {
                         HttpEntity entity = response2.getEntity();
