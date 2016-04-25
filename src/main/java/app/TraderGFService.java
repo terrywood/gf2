@@ -57,9 +57,9 @@ public class TraderGFService implements  InitializingBean {
         this.cookieStore = new BasicCookieStore();
         if(login()){
             pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
-         //   pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
+            pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
 
-          //  balance();
+            balance();
         }
      }
 

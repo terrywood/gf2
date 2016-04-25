@@ -39,9 +39,8 @@ public class MoneyListen implements Runnable {
         this.dseSessionId = dseSessionId;
         this.buy= buy;
         this.sale= sale;
-
         cm = new PoolingHttpClientConnectionManager();
-        cm.setMaxTotal(10);
+        cm.setMaxTotal(50);
         httpclient = HttpClients.custom()
                 .setDefaultCookieStore(cookieStore)
                 .setUserAgent(userAgent)
@@ -52,12 +51,11 @@ public class MoneyListen implements Runnable {
     public void run() {
         try {
             long c2 = System.currentTimeMillis();
-
-        /*    CloseableHttpClient httpclient = HttpClients.custom()
+            /*    CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
                     .setConnectionManager(cm).build();
-*/
+            */
             String[] urisToGet = {
                     "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+cow+"&dse_sessionId="+dseSessionId,
                     "https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+beer+"&dse_sessionId="+dseSessionId
@@ -86,25 +84,28 @@ public class MoneyListen implements Runnable {
                 System.out.println("upData->" + upData);
                 System.out.println("downData->" + downData);
                 System.out.println("-------------------------------------------------");
-                Thread.sleep(1000);
             } else if (buyTotal > sale) {
                 trading("2",upBuyPrice, downBuyPrice);
                 System.out.println("Sale：S+[" + String.valueOf(saleTotal) + "]　B+[" + String.valueOf(buyTotal) + "] code[878002,878003]");
                 // System.out.println("upData->"+upData);
                 //System.out.println("downData->"+downData);
                 // System.out.println("-------------------------------------------------");
-                Thread.sleep(1000);
             }
-
-
            // trading("1",upSalePrice, downSalePrice);
            // trading("2",upBuyPrice, downBuyPrice);
-
-            System.out.println(cow+" and "+beer+" times:" +(System.currentTimeMillis()-c2));
+           // System.out.println(cow+" and "+beer+" times:" +(System.currentTimeMillis()-c2));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        run();
+
+        try {
+            Thread.sleep(1000);
+            run();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
 
