@@ -2,6 +2,7 @@ package app;
 
 
 import com.google.gson.Gson;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
@@ -45,24 +46,118 @@ import java.util.concurrent.Executors;
 @Service("TraderService")
 public class TraderGFService implements  InitializingBean {
     private static final Logger log = LoggerFactory.getLogger(TraderGFService.class);
-    public static  String userAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)";
+    public   String userAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)";
     public   BasicCookieStore cookieStore;
     public   String dseSessionId = null;
+    public   String domain = "https://etrade.gf.com.cn";
+   // ExecutorService pool = Executors.newFixedThreadPool(4);
 
-    ExecutorService pool = Executors.newFixedThreadPool(4);
 
+    private double intPrice;
+    private double grid = intPrice*0.007;
+    private int lastNet =0;
+    private int minNet = -10;
+    private int volume =1000;
+    private  String fundCode ="878002";
 
     @Override
     public void afterPropertiesSet() throws Exception {
         this.cookieStore = new BasicCookieStore();
         if(login()){
-            pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
+            intPrice = getLastPrice();
+            grid = intPrice*0.01;
+            check();
+         /*   pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
             pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
-
-            balance();
+            balance();*/
         }
      }
 
+
+    public void check() {
+        long start = System.currentTimeMillis();
+        try {
+            double price = getLastPrice();
+            if(price>0d) checkPrice(price);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("sleep to 5 sec");
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+
+        }finally {
+            System.out.println("use ms:"+ (System.currentTimeMillis()-start));
+            check();
+        }
+
+
+    }
+
+    public void  checkPrice(double lastPrice){
+
+            double curPrice = grid*(lastNet) +intPrice;
+            int step = new Double((lastPrice - curPrice)/grid).intValue();
+           // System.out.println("lastPrice["+lastPrice+"] gridPrice["+curPrice+"] step["+step+"]");
+            if(step>0){
+                lastNet+=step;
+                if(lastNet>minNet){
+                    order(lastPrice,Math.abs(volume*step),"2");//sell
+                }
+            }else if(step<0){
+                lastNet+=step;
+                if(lastNet>=minNet){
+                    order(lastPrice,Math.abs(volume*step),"1"); //buy
+                }
+            }
+
+
+    }
+
+    public  double getLastPrice() throws IOException {
+        Gson gson = new Gson();
+        String httpUrl =domain+"/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+fundCode+"&dse_sessionId="+dseSessionId;
+
+            CloseableHttpClient httpclient = HttpClients.custom()
+                    .setDefaultCookieStore(cookieStore)
+                    .setUserAgent(userAgent)
+                    .build();
+            HttpGet httpGet = new HttpGet(httpUrl);
+            CloseableHttpResponse response =  httpclient.execute(httpGet);
+            Map map = gson.fromJson(IOUtils.toString( response.getEntity().getContent(), Consts.UTF_8), Map.class);
+            Map data = (Map)((List) map.get("data")).get(0);
+            return MapUtils.getDouble(data,"last_price");
+
+    }
+
+    public void  order(double lastPrice, int amount, String bs){
+        String httpUrl =domain+"/entry?entrust_bs="+bs+"&auto_deal=true&classname=com.gf.etrade.control.NXBUF2Control&method=nxbentrust&fund_code="+fundCode+"&dse_sessionId="+dseSessionId+"&entrust_price="+lastPrice+"&entrust_amount="+amount;
+        try {
+            CloseableHttpClient httpclient = HttpClients.custom()
+                    .setDefaultCookieStore(cookieStore)
+                    .setUserAgent(userAgent)
+                    .build();
+            HttpGet httpGet = new HttpGet(httpUrl);
+            CloseableHttpResponse response =  httpclient.execute(httpGet);
+            String result = EntityUtils.toString(response.getEntity());
+
+            System.out.println(result);
+
+          /*  GridTrading model = new GridTrading();
+            model.setFund(fundCode);
+            model.setPrice(lastPrice);
+            model.setLogTime(new Date());
+            model.setType(bs);
+            model.setAmount(amount);
+            model.setLastNet(lastNet);
+            gridTradingDao.save(model);*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+/*
     public void balance(){
        String url ="https://etrade.gf.com.cn/entry?classname=com.gf.etrade.control.StockUF2Control&method=queryFund&dse_sessionId="+dseSessionId+"&_dc=1461512091606";
         CloseableHttpClient httpclient = HttpClients.custom()
@@ -73,8 +168,8 @@ public class TraderGFService implements  InitializingBean {
         CloseableHttpResponse response3 = null;
         try {
             response3 = httpclient.execute(httpGet);
-           // HttpEntity entity3 = response3.getEntity();
-            //System.out.println(EntityUtils.toString(entity3));
+            HttpEntity entity3 = response3.getEntity();
+            System.out.println(EntityUtils.toString(entity3));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -85,7 +180,7 @@ public class TraderGFService implements  InitializingBean {
             e.printStackTrace();
         }
         balance();
-    }
+    }*/
 
     public boolean login() {
         boolean isOk = false;
@@ -96,7 +191,7 @@ public class TraderGFService implements  InitializingBean {
                     .setUserAgent(userAgent)
                     .build();
             try {
-                HttpGet httpGet = new HttpGet("https://etrade.gf.com.cn/yzm.jpgx");
+                HttpGet httpGet = new HttpGet(domain+"/yzm.jpgx");
                 CloseableHttpResponse response3 = httpclient.execute(httpGet);
                 HttpEntity entity3 = response3.getEntity();
                 File file = new File("d:/gf.jpg");
@@ -111,7 +206,7 @@ public class TraderGFService implements  InitializingBean {
                     capthca = bufferedReader.readLine();
 
                     HttpUriRequest login = RequestBuilder.post()
-                            .setUri(new URI("https://etrade.gf.com.cn/login"))
+                            .setUri(new URI(domain+"/login"))
                             .addParameter("username", "*1B*8DJo*0FJd*D9*28rq*5E*FF*8Fj*9EG*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00")
                             .addParameter("password", "*E1*B58F*23*B7*C6*2E*05*3F*E6*5D*09*C2*122G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8G*97*883*91G*16bw*22*A05*A8*CCL8*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00*00")
                             .addParameter("tmp_yzm", capthca)
