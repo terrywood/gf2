@@ -36,15 +36,12 @@ public class TraderGFService implements  InitializingBean {
     public   String dseSessionId = null;
     public   String domain = "https://etrade.gf.com.cn";
     // ExecutorService pool = Executors.newFixedThreadPool(4);
-
-
     private double intPrice;
     private double grid = intPrice*0.007;
     private int lastNet =0;
     private int minNet = -10;
     private int volume =1000;
     private  String fundCode ="878002";
-
     @Override
     public void afterPropertiesSet() throws Exception {
         this.cookieStore = new BasicCookieStore();
@@ -119,6 +116,7 @@ public class TraderGFService implements  InitializingBean {
     }
 
     public void  order(double lastPrice, int amount, String bs){
+        System.out.println("initPrice["+intPrice+"] grid["+grid+"]lastNet["+lastNet+"]");
         String httpUrl =domain+"/entry?entrust_bs="+bs+"&auto_deal=true&classname=com.gf.etrade.control.NXBUF2Control&method=nxbentrust&fund_code="+fundCode+"&dse_sessionId="+dseSessionId+"&entrust_price="+lastPrice+"&entrust_amount="+amount;
         try {
             CloseableHttpClient httpclient = HttpClients.custom()
@@ -128,9 +126,7 @@ public class TraderGFService implements  InitializingBean {
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response =  httpclient.execute(httpGet);
             String result = EntityUtils.toString(response.getEntity());
-
             System.out.println(result);
-
           /*  GridTrading model = new GridTrading();
             model.setFund(fundCode);
             model.setPrice(lastPrice);
