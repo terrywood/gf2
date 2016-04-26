@@ -90,7 +90,6 @@ public class TraderGFService implements  InitializingBean {
     }
 
     public void  checkPrice(double lastPrice){
-
         double curPrice = grid*(lastNet) +intPrice;
         int step = new Double((lastPrice - curPrice)/grid).intValue();
         // System.out.println("lastPrice["+lastPrice+"] gridPrice["+curPrice+"] step["+step+"]");
@@ -105,8 +104,6 @@ public class TraderGFService implements  InitializingBean {
                 order(lastPrice,Math.abs(volume*step),"1"); //buy
             }
         }
-
-
     }
 
     public void  order(double lastPrice, int amount, String bs){
