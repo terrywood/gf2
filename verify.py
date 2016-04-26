@@ -3,8 +3,7 @@
 __author__ = 'Terry Wu'
 import sys
 from PIL import ImageFilter, Image
-import pytesseract
-def detect_gf_result(image_path = 'd:\gf.jpg'):
+def detect_gf_result(image_path = 'd:\gf\gf.jpg'):
     img = Image.open(image_path)
     if hasattr(img, "width"):
         width, height = img.width, img.height
@@ -20,9 +19,8 @@ def detect_gf_result(image_path = 'd:\gf.jpg'):
     med_res = min_res.filter(ImageFilter.MedianFilter)
     for _ in range(2):
         min_res = med_res.filter(ImageFilter.MedianFilter)
-    #min_res.save('d:/pp.jpg','JPEG')
-    res = pytesseract.image_to_string(med_res)
-    print(med_res)
+    min_res.save('d:/gf/gf_bw.jpg','JPEG')
+    #print(med_res)
 
 def test():
     args = sys.argv

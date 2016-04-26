@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -55,8 +56,7 @@ public class TraderGFService implements  InitializingBean {
             balance();*/
         }
     }
-
-    @Scheduled(fixedDelay = 10)
+    @Scheduled(fixedDelay = 1)
     public void check() {
         long start = System.currentTimeMillis();
         try {
@@ -70,13 +70,23 @@ public class TraderGFService implements  InitializingBean {
             } catch (InterruptedException e1) {
                 e1.printStackTrace();
             }
-
         }finally {
             System.out.println("use ms:"+ (System.currentTimeMillis()-start));
-
         }
+    }
 
-
+    public  double getLastPrice() throws IOException {
+        Gson gson = new Gson();
+        String httpUrl =domain+"/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+fundCode+"&dse_sessionId="+dseSessionId;
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(userAgent)
+                .build();
+        HttpGet httpGet = new HttpGet(httpUrl);
+        CloseableHttpResponse response =  httpclient.execute(httpGet);
+        Map map = gson.fromJson(IOUtils.toString( response.getEntity().getContent(), Consts.UTF_8), Map.class);
+        Map data = (Map)((List) map.get("data")).get(0);
+        return MapUtils.getDouble(data,"last_price");
     }
 
     public void  checkPrice(double lastPrice){
@@ -96,22 +106,6 @@ public class TraderGFService implements  InitializingBean {
             }
         }
 
-
-    }
-
-    public  double getLastPrice() throws IOException {
-        Gson gson = new Gson();
-        String httpUrl =domain+"/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+fundCode+"&dse_sessionId="+dseSessionId;
-
-        CloseableHttpClient httpclient = HttpClients.custom()
-                .setDefaultCookieStore(cookieStore)
-                .setUserAgent(userAgent)
-                .build();
-        HttpGet httpGet = new HttpGet(httpUrl);
-        CloseableHttpResponse response =  httpclient.execute(httpGet);
-        Map map = gson.fromJson(IOUtils.toString( response.getEntity().getContent(), Consts.UTF_8), Map.class);
-        Map data = (Map)((List) map.get("data")).get(0);
-        return MapUtils.getDouble(data,"last_price");
 
     }
 
@@ -176,16 +170,26 @@ public class TraderGFService implements  InitializingBean {
                 HttpGet httpGet = new HttpGet(domain+"/yzm.jpgx");
                 CloseableHttpResponse response3 = httpclient.execute(httpGet);
                 HttpEntity entity3 = response3.getEntity();
-                File file = new File("d:/gf.jpg");
+                File file = new File("d:/gf/gf.jpg");
                 FileUtils.copyInputStreamToFile(entity3.getContent(),file);
                 // BufferedImage image = ImageIO.read(entity3.getContent());
                 EntityUtils.consume(entity3);
                 String capthca = null;
                 {
-                    InputStream inputStream = System.in;
+                 /*   InputStream inputStream = System.in;
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                     System.out.println("请输入验证码:");
-                    capthca = bufferedReader.readLine();
+                    capthca = bufferedReader.readLine();*/
+
+                    CommandUtils.executeCommand("python d:\\gf\\verify.py");
+
+                    CommandUtils.executeCommand("D:\\gf\\tesseract.exe D:\\gf\\gf_bw.jpg d:\\gf\\code");
+
+                    capthca = StringUtils.trimAllWhitespace(FileUtils.readFileToString(new File("d:\\gf\\code.txt")));
+                    System.out.println("capthca["+capthca+"]");
+                    if(capthca.length()!=5){
+                        login();
+                    }
 
                     HttpUriRequest login = RequestBuilder.post()
                             .setUri(new URI(domain+"/login"))

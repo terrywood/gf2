@@ -1,10 +1,10 @@
-import org.apache.commons.io.IOUtils;
-import org.python.core.PyException;
-import org.springframework.util.StringUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
 import java.io.*;
 
 /**
@@ -13,106 +13,27 @@ import java.io.*;
 public class PythonTest {
     public static void main(String[] args) throws IOException, InterruptedException {
 
-/*
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("python");
-
-        try
-        {
-            engine.eval(new FileReader("verify.py"));
-        }
-        catch(ScriptException se)
-        {
-        }
-        catch(IOException ie)
-        {
-        }
-*/
-        //excuteCommand("ipconfig");
-        //excuteCommand("python verify.py");
-        Process proc = Runtime.getRuntime().exec("python verify.py");
-        doWaitFor(proc);
-/*      Process proc = Runtime.getRuntime().exec("cmd /c python verify.py > aa.txt");
-
-        String code = (IOUtils.toString(proc.getInputStream()));
-        if (!StringUtils.isEmpty(code))
-            System.out.println("code->" + code);*/
-
-        // proc.destroy();
-
-    }
-
-    public static void  excuteCommand(String command)
-    {
-
-        Runtime r = Runtime.getRuntime();
-        Process p;
+        long start = System.currentTimeMillis();
+        String domain = "https://etrade.gf.com.cn";
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .build();
         try {
+            HttpGet httpGet = new HttpGet(domain + "/yzm.jpgx");
+            CloseableHttpResponse response3 = httpclient.execute(httpGet);
+            HttpEntity entity3 = response3.getEntity();
+            File file = new File("d:\\gf\\gf.jpg");
+            FileUtils.copyInputStreamToFile(entity3.getContent(), file);
 
-            p = r.exec(command);
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String inline;
-            while ((inline = br.readLine()) != null) {
-                System.out.println(inline);
 
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }catch (Exception ex){
+
         }
 
+        System.out.println("use times:"+(System.currentTimeMillis()-start));
     }
 
-    public static int doWaitFor(Process process) {
-        InputStream in = null;
-        InputStream err = null;
-        int exitValue = -1; // returned to caller when p is finished
-        try {
-            in = process.getInputStream();
-            err = process.getErrorStream();
-            boolean finished = false; // Set to true when p is finished
-            while (!finished) {
-                try {
-                    while (in.available() > 0) {
-                        // Print the output of our system call
-                        Character c = new Character((char) in.read());
-                        System.out.print(c);
-                    }
-                    while (err.available() > 0) {
-                        // Print the output of our system call
-                        Character c = new Character((char) err.read());
-                        System.out.print(c);
-                    }
-                    // Ask the process for its exitValue. If the process
-                    // is not finished, an IllegalThreadStateException
-                    // is thrown. If it is finished, we fall through and
-                    // the variable finished is set to true.
-                    exitValue = process.exitValue();
-                    finished = true;
-                } catch (IllegalThreadStateException e) {
-                    // Process is not finished yet;
-                    // Sleep a little to save on CPU cycles
-                    Thread.currentThread().sleep(500);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            if (err != null) {
-                try {
-                    err.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return exitValue;
-    }
+
+
+
 
 }
