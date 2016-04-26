@@ -15,32 +15,17 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 @Service("TraderService")
@@ -50,7 +35,7 @@ public class TraderGFService implements  InitializingBean {
     public   BasicCookieStore cookieStore;
     public   String dseSessionId = null;
     public   String domain = "https://etrade.gf.com.cn";
-   // ExecutorService pool = Executors.newFixedThreadPool(4);
+    // ExecutorService pool = Executors.newFixedThreadPool(4);
 
 
     private double intPrice;
@@ -66,14 +51,15 @@ public class TraderGFService implements  InitializingBean {
         if(login()){
             intPrice = getLastPrice();
             grid = intPrice*0.01;
-            check();
+            System.out.println("initPrice["+intPrice+"] grid["+grid+"]");
+            //check();
          /*   pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
             pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
             balance();*/
         }
-     }
+    }
 
-
+    @Scheduled(fixedDelay = 10)
     public void check() {
         long start = System.currentTimeMillis();
         try {
@@ -90,7 +76,7 @@ public class TraderGFService implements  InitializingBean {
 
         }finally {
             System.out.println("use ms:"+ (System.currentTimeMillis()-start));
-            check();
+
         }
 
 
@@ -98,20 +84,20 @@ public class TraderGFService implements  InitializingBean {
 
     public void  checkPrice(double lastPrice){
 
-            double curPrice = grid*(lastNet) +intPrice;
-            int step = new Double((lastPrice - curPrice)/grid).intValue();
-           // System.out.println("lastPrice["+lastPrice+"] gridPrice["+curPrice+"] step["+step+"]");
-            if(step>0){
-                lastNet+=step;
-                if(lastNet>minNet){
-                    order(lastPrice,Math.abs(volume*step),"2");//sell
-                }
-            }else if(step<0){
-                lastNet+=step;
-                if(lastNet>=minNet){
-                    order(lastPrice,Math.abs(volume*step),"1"); //buy
-                }
+        double curPrice = grid*(lastNet) +intPrice;
+        int step = new Double((lastPrice - curPrice)/grid).intValue();
+        // System.out.println("lastPrice["+lastPrice+"] gridPrice["+curPrice+"] step["+step+"]");
+        if(step>0){
+            lastNet+=step;
+            if(lastNet>minNet){
+                order(lastPrice,Math.abs(volume*step),"2");//sell
             }
+        }else if(step<0){
+            lastNet+=step;
+            if(lastNet>=minNet){
+                order(lastPrice,Math.abs(volume*step),"1"); //buy
+            }
+        }
 
 
     }
@@ -120,15 +106,15 @@ public class TraderGFService implements  InitializingBean {
         Gson gson = new Gson();
         String httpUrl =domain+"/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code="+fundCode+"&dse_sessionId="+dseSessionId;
 
-            CloseableHttpClient httpclient = HttpClients.custom()
-                    .setDefaultCookieStore(cookieStore)
-                    .setUserAgent(userAgent)
-                    .build();
-            HttpGet httpGet = new HttpGet(httpUrl);
-            CloseableHttpResponse response =  httpclient.execute(httpGet);
-            Map map = gson.fromJson(IOUtils.toString( response.getEntity().getContent(), Consts.UTF_8), Map.class);
-            Map data = (Map)((List) map.get("data")).get(0);
-            return MapUtils.getDouble(data,"last_price");
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(userAgent)
+                .build();
+        HttpGet httpGet = new HttpGet(httpUrl);
+        CloseableHttpResponse response =  httpclient.execute(httpGet);
+        Map map = gson.fromJson(IOUtils.toString( response.getEntity().getContent(), Consts.UTF_8), Map.class);
+        Map data = (Map)((List) map.get("data")).get(0);
+        return MapUtils.getDouble(data,"last_price");
 
     }
 
@@ -196,7 +182,7 @@ public class TraderGFService implements  InitializingBean {
                 HttpEntity entity3 = response3.getEntity();
                 File file = new File("d:/gf.jpg");
                 FileUtils.copyInputStreamToFile(entity3.getContent(),file);
-               // BufferedImage image = ImageIO.read(entity3.getContent());
+                // BufferedImage image = ImageIO.read(entity3.getContent());
                 EntityUtils.consume(entity3);
                 String capthca = null;
                 {
@@ -219,8 +205,8 @@ public class TraderGFService implements  InitializingBean {
                     CloseableHttpResponse response2 = httpclient.execute(login);
                     try {
                         HttpEntity entity = response2.getEntity();
-                      //  System.out.println("Login form get: " + response2.getStatusLine());
-                     //   String result = IOUtils.toString(entity.getContent(), "UTF-8");
+                        //  System.out.println("Login form get: " + response2.getStatusLine());
+                        //   String result = IOUtils.toString(entity.getContent(), "UTF-8");
                         System.out.println("result:" + EntityUtils.toString(entity));
                         EntityUtils.consume(entity);
                         System.out.println("Post logon cookies:");
