@@ -49,13 +49,14 @@ public class TraderGFService implements  InitializingBean {
         if(login()){
             intPrice = getLastPrice();
             grid = intPrice*0.01;
-            System.out.println("initPrice["+intPrice+"] grid["+grid+"]");
+            System.out.println("initPrice["+intPrice+"] grid["+grid+"] lastNet["+lastNet+"]");
             //check();
          /*   pool.execute(new MoneyListen("878002","878003",cookieStore,dseSessionId,1.997d,2.003d));
             pool.execute(new MoneyListen("878004","878005",cookieStore,dseSessionId,1.997d,2.003d));
             balance();*/
         }
     }
+
     @Scheduled(fixedDelay = 1)
     public void check() {
         long start = System.currentTimeMillis();
