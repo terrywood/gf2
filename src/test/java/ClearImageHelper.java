@@ -1,5 +1,5 @@
 
-import java.awt.Color;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +16,20 @@ import javax.imageio.ImageIO;
 
 public class ClearImageHelper
 {
+
+    public static int getScreenPixel(int x, int y) throws AWTException { // 函数返回值为颜色的RGB值。
+        Robot rb = null; // java.awt.image包中的类，可以用来抓取屏幕，即截屏。
+        rb = new Robot();
+        Toolkit tk = Toolkit.getDefaultToolkit(); // 获取缺省工具包
+        Dimension di = tk.getScreenSize(); // 屏幕尺寸规格
+        System.out.println(di.width);
+        System.out.println(di.height);
+        Rectangle rec = new Rectangle(0, 0, di.width, di.height);
+        BufferedImage bi = rb.createScreenCapture(rec);
+        int pixelColor = bi.getRGB(x, y);
+
+        return 16777216 + pixelColor; // pixelColor的值为负，经过实践得出：加上颜色最大值就是实际颜色值。
+    }
 
     public static void main(String[] args) throws IOException
     {
@@ -60,6 +74,10 @@ public class ClearImageHelper
             for (int y = 0; y < h; y++)
             {
                 int argb = bufferedImage.getRGB(x, y);
+               // if(x==0 || y==0 || x ==w-1 || y ==h-1 ){
+                    System.out.println(16777216 +argb);
+             //   }
+
                 // 图像加亮（调整亮度识别率非常高）
                 int r = (int) (((argb >> 16) & 0xFF) * 1.1 + 30);
                 int g = (int) (((argb >> 8) & 0xFF) * 1.1 + 30);
