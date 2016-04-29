@@ -23,6 +23,7 @@ import org.hibernate.annotations.Synchronize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -44,6 +45,7 @@ public class AccountService  implements InitializingBean {
     public   BasicCookieStore cookieStore = new BasicCookieStore();
     public   String dseSessionId = null;
     public   String domain = "https://etrade.gf.com.cn";
+    @Autowired
     private GridTradingRepository gridTradingRepository;
     //private  UserSession userSession;
     public  boolean isLogin = false;
@@ -82,14 +84,16 @@ public class AccountService  implements InitializingBean {
         String httpUrl = domain + "/entry?entrust_bs=" + bs + "&auto_deal=true&classname=com.gf.etrade.control.NXBUF2Control&method=nxbentrust&fund_code=" + fundCode + "&dse_sessionId=" + dseSessionId + "&entrust_price=" + lastPrice + "&entrust_amount=" + amount;
         log.info(httpUrl);
         try {
-            CloseableHttpClient httpclient = HttpClients.custom()
+
+           /* CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
                     .build();
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String result = EntityUtils.toString(response.getEntity());
-            System.out.println(result);
+            System.out.println(result);*/
+
             GridTrading model = new GridTrading();
             model.setFund(fundCode);
             model.setPrice(lastPrice);
