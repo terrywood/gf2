@@ -1,5 +1,3 @@
-package app;
-
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
