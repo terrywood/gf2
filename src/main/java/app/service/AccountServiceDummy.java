@@ -21,7 +21,7 @@ public class AccountServiceDummy implements AccountService {
     @Override
     public double getLastPrice(String fundCode) throws IOException {
         try {
-            Thread.sleep(3000);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
