@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -42,7 +43,15 @@ public class ClearImageHelper
             cleanImage(file, destDir);
         }*/
 
-        cleanImage(new File("G:\\dev\\image\\yzm4.jpg"), "G:\\dev\\image\\dist");
+        Random random = new Random();
+        for(int i=20;i<50;i++){
+            Double d = random.nextDouble()/40 +1;
+            System.out.println(d);
+        }
+
+
+
+       // cleanImage(new File("G:\\dev\\image\\yzm4.jpg"), "G:\\dev\\image\\dist");
 
     }
 

@@ -21,12 +21,12 @@ public class AccountServiceDummy implements AccountService {
     @Override
     public double getLastPrice(String fundCode) throws IOException {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         Random random = new Random();
-        Double d = random.nextDouble()/5 +1;
+        Double d = random.nextDouble()/50 +1;
         NumberFormat format =   java.text.NumberFormat.getInstance();
         format.setMaximumFractionDigits(3);
         double ret = Double.valueOf( format.format(d));
@@ -43,7 +43,6 @@ public class AccountServiceDummy implements AccountService {
         model.setAmount(amount);
         model.setLastNet(lastNet);
         gridTradingRepository.save(model);
-
         System.out.println(model);
     }
 }
