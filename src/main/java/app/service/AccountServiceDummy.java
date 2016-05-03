@@ -13,7 +13,7 @@ import java.util.Random;
 /**
  * Created by Riky on 2016/4/30.
  */
-@Service("AccountService")
+//@Service("AccountService")
 public class AccountServiceDummy implements AccountService {
     @Autowired
     GridTradingRepository gridTradingRepository;

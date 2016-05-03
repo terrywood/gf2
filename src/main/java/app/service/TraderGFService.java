@@ -32,7 +32,7 @@ public class TraderGFService implements InitializingBean {
 
     }
 
-
+  /*
     class Work implements Runnable{
         GridEntity entity;
         public Work(GridEntity entity) {
@@ -102,9 +102,10 @@ public class TraderGFService implements InitializingBean {
         }
         log.info("use ms:" + (System.currentTimeMillis() - start));
     }
+*/
 
 
-    /*
+    @Scheduled(fixedDelay = 1)
     private void check() {
         long start = System.currentTimeMillis();
         if(isTradeDayTimeByMarket()){
@@ -140,8 +141,8 @@ public class TraderGFService implements InitializingBean {
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
-                        System.out.println(e.getMessage());
-                        System.out.println("sleep to 5 sec");
+                        log.info(e.getMessage());
+                        log.info("sleep to 5 sec");
                         try {
                             Thread.sleep(5000);
                         } catch (InterruptedException e1) {
@@ -149,6 +150,11 @@ public class TraderGFService implements InitializingBean {
                         }
                     } finally {
                     }
+
+              long speed =(System.currentTimeMillis() - start);
+              if(speed>1000){
+                  log.info("use ms:" + (System.currentTimeMillis() - start));
+              }
             }
         }else{
             try {
@@ -157,13 +163,14 @@ public class TraderGFService implements InitializingBean {
                 e.printStackTrace();
             }
         }
-        System.out.println("use ms:" + (System.currentTimeMillis() - start));
-    }*/
+
+
+    }
 
     public boolean isTradeDayTimeByMarket() {
-       if (1 == 1) {
+     /*  if (1 == 1) {
             return true;
-        }
+        }*/
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
