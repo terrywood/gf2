@@ -1,6 +1,7 @@
 package app.service;
 
 import app.CommandUtils;
+import app.entity.APIResult;
 import app.entity.GridTrading;
 import app.repository.GridTradingRepository;
 import com.google.gson.Gson;
@@ -45,21 +46,14 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     public String domain = "https://etrade.gf.com.cn";
     @Autowired
     private GridTradingRepository gridTradingRepository;
-    //private  UserSession userSession;
-    public boolean isLogin = false;
 
-/*    public UserSession getUserSession() {
-        return userSession;
-    }
-    public void setUserSession(UserSession userSession) {
-        this.userSession = userSession;
-    }*/
+    public boolean isLogin = false;
+    Gson gson = new Gson();
 
 
     @Override
     public double getLastPrice(String fundCode) throws IOException {
         if (isLogin) {
-            Gson gson = new Gson();
             String httpUrl = domain + "/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=" + fundCode + "&dse_sessionId=" + dseSessionId;
             CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
@@ -68,18 +62,15 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String result = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
-            //System.out.println("gf account result:" + result);
-            Map map = gson.fromJson(result, Map.class);
-            if (map == null || map.isEmpty()) {
-                System.out.println("gf account is logout 2");
+          //  System.out.println("gf account result:" + result);
+            try {
+                APIResult obj = gson.fromJson(result, APIResult.class);
+                return obj.getData().get(0).getLast_price();
+            }catch (Exception e){
+                log.info( result);
+                //e.printStackTrace();
                 login();
                 return 0d;
-        /*    }else if( MapUtils.getInteger(map,"total")==0){
-                 isNonTradDay = true;
-                 return 0d;*/
-            } else {
-                Map data = (Map) ((List) map.get("data")).get(0);
-                return MapUtils.getDouble(data, "last_price");
             }
 
         } else {
@@ -105,6 +96,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String result = EntityUtils.toString(response.getEntity());
             System.out.println(result);*/
+
             GridTrading model = new GridTrading();
             model.setFund(fundCode);
             model.setPrice(lastPrice);
