@@ -3,16 +3,20 @@ package app.service;
 
 import app.entity.GridEntity;
 import app.repository.GridEntityRepository;
+import org.apache.http.client.utils.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,8 +29,9 @@ public class TraderGFService implements InitializingBean {
     @Autowired
     private AccountService accountService;
     @Autowired
-    private  GridService gridService;
+    private GridService gridService;
 
+    private boolean isHoliday = false;
     @Override
     public void afterPropertiesSet() throws Exception {
 
@@ -108,8 +113,8 @@ public class TraderGFService implements InitializingBean {
     @Scheduled(fixedDelay = 1)
     private void check() {
         long start = System.currentTimeMillis();
-        if(isTradeDayTimeByMarket()){
-            List<GridEntity> list=  gridService.findAll();
+        if (isTradeDayTimeByMarket()) {
+            List<GridEntity> list = gridService.findAll();
             for (GridEntity entity : list) {
                 double intPrice = entity.getIntPrice();
                 String fundCode = entity.getFundCode();
@@ -117,48 +122,47 @@ public class TraderGFService implements InitializingBean {
                 double grid = entity.getGrid();
                 int minNet = entity.getMinNet();
                 int volume = entity.getVolume();
-                    try {
-                        double lastPrice = accountService.getLastPrice(entity.getFundCode());
-                        if (lastPrice > 0d) {
-                            double grindPrice = grid * (position) + intPrice;
-                            int step = new Double((lastPrice - grindPrice) / grid).intValue();
-                           // System.out.println("lastPrice[" + lastPrice + "] gridPrice[" + grindPrice + "] step[" + step + "]");
-                            if (step > 0) {
-                                position += step;
-                                if (position > minNet) {
-                                    accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "2");//sell
-                                    entity.setPosition(position);
-                                    gridService.save(entity);
-                                }
-                            } else if (step < 0) {
-                                position += step;
-                                if (position >= minNet) {
-                                    accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "1"); //buy
-                                    entity.setPosition(position);
-                                    gridService.save(entity);
-                                }
+                try {
+                    double lastPrice = accountService.getLastPrice(entity.getFundCode());
+                    if (lastPrice > 0d) {
+                        double grindPrice = grid * (position) + intPrice;
+                        int step = new Double((lastPrice - grindPrice) / grid).intValue();
+                        if (step > 0) {
+                            position += step;
+                            if (position > minNet) {
+                                accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "2");//sell
+                                entity.setPosition(position);
+                                gridService.save(entity);
+                            }
+                        } else if (step < 0) {
+                            position += step;
+                            if (position >= minNet) {
+                                accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "1"); //buy
+                                entity.setPosition(position);
+                                gridService.save(entity);
                             }
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        log.info(e.getMessage());
-                        log.info("sleep to 5 sec");
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
-                        }
-                    } finally {
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    log.info(e.getMessage());
+                    log.info("sleep to 5 sec");
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                } finally {
+                }
 
-              long speed =(System.currentTimeMillis() - start);
-              if(speed>1000){
-                  log.info("use ms:" + (System.currentTimeMillis() - start));
-              }
+                long speed = (System.currentTimeMillis() - start);
+                if (speed > 1000) {
+                    log.info("use ms:" + (System.currentTimeMillis() - start));
+                }
             }
-        }else{
+        } else {
             try {
-                Thread.sleep(1000*60*10); //sleep 10 min
+                Thread.sleep(1000 * 60 * 10); //sleep 10 min
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -167,10 +171,26 @@ public class TraderGFService implements InitializingBean {
 
     }
 
+
+/*    @Scheduled(cron = "0 1 0 ? * MON-FRI")
+    private void checkIsHoliday(){
+        String today = DateUtils.formatDate(new Date(),"yyyy-MM-dd");
+        String[] holidays ={"2016-06-09","2016-06-10","2016-19-15","2016-09-16","2016-10-03","2016-10-04","2016-10-05","2016-10-06","2016-10-07"};
+        for(String str : holidays){
+            if(str.equals(today)){
+                this.isHoliday = true;
+                break;
+            }
+        }
+        this.isHoliday=false;
+    }*/
+
     public boolean isTradeDayTimeByMarket() {
      /*  if (1 == 1) {
             return true;
         }*/
+       // if(isHoliday)return false;
+
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);
         int minute = cal.get(Calendar.MINUTE);
