@@ -14,6 +14,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.config.ConnectionConfig;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -43,13 +44,15 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     public String userAgent = "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.1; WOW64; Trident/5.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; .NET4.0C; .NET4.0E)";
     public BasicCookieStore cookieStore = new BasicCookieStore();
     public String dseSessionId = null;
-    public String domain = "https://etrade.gf.com.cn";
+    public String domain = "https://trade.gf.com.cn";
     @Autowired
     private GridTradingRepository gridTradingRepository;
 
     public boolean isLogin = false;
     Gson gson = new Gson();
-
+    ConnectionConfig connectionConfig = ConnectionConfig.custom()
+            .setBufferSize(4128)
+            .build();
 
     @Override
     public double getLastPrice(String fundCode) throws IOException {
@@ -58,6 +61,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
+                  //  .setDefaultConnectionConfig(connectionConfig)
                     .build();
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response = httpclient.execute(httpGet);
@@ -71,6 +75,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                 //e.printStackTrace();
                 login();
                 return 0d;
+            }finally {
+                httpGet.releaseConnection();
+                httpclient.close();
             }
 
         } else {
@@ -110,8 +117,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
         }
     }
 
-    public synchronized boolean login() {
-        boolean isOk = false;
+    public synchronized void login() {
         Gson gson = new Gson();
         try {
             long start = System.currentTimeMillis();
@@ -136,10 +142,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                     CommandUtils.executeCommand("python d:\\gf\\verify.py");
                     CommandUtils.executeCommand("D:\\gf\\tesseract.exe D:\\gf\\gf_bw.jpg d:\\gf\\code");
                     capthca = StringUtils.trimAllWhitespace(FileUtils.readFileToString(new File("d:\\gf\\code.txt"), Charset.forName("UTF-8")));
-
                     if (capthca.length() != 5) {
                         System.out.println("error capthca[" + capthca + "] re login");
-                        return false;
+                        return ;
                     }
                     HttpUriRequest login = RequestBuilder.post()
                             .setUri(new URI(domain + "/login"))
@@ -178,7 +183,6 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                                     //cookieStore.addCookie(cookies.get(i));
                                     System.out.println("- " + cookies.get(i).toString());
                                 }
-                                isOk = true;
                                 this.isLogin = true;
                                 // this.setUserSession(userSession);
                             }
@@ -186,7 +190,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
                         } else {
                             System.out.println("verify code error re login");
-                            return false;
+
                         }
                     } finally {
                         response2.close();
@@ -200,7 +204,6 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return isOk;
     }
 
     @Override

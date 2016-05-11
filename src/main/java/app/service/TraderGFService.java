@@ -30,8 +30,9 @@ public class TraderGFService implements InitializingBean {
     private AccountService accountService;
     @Autowired
     private GridService gridService;
+    @Autowired
+    private HolidayService holidayService;
 
-    private boolean isHoliday = false;
     @Override
     public void afterPropertiesSet() throws Exception {
 
@@ -112,18 +113,20 @@ public class TraderGFService implements InitializingBean {
 
     @Scheduled(fixedDelay = 1)
     private void check() {
-        long start = System.currentTimeMillis();
-        if (isTradeDayTimeByMarket()) {
+
+        if (holidayService.isTradeDayTimeByMarket()) {
             List<GridEntity> list = gridService.findAll();
             for (GridEntity entity : list) {
+                long start = System.currentTimeMillis();
                 double intPrice = entity.getIntPrice();
                 String fundCode = entity.getFundCode();
                 int position = entity.getPosition();
                 double grid = entity.getGrid();
                 int minNet = entity.getMinNet();
                 int volume = entity.getVolume();
+                double lastPrice = 0;
                 try {
-                    double lastPrice = accountService.getLastPrice(entity.getFundCode());
+                    lastPrice = accountService.getLastPrice(entity.getFundCode());
                     if (lastPrice > 0d) {
                         double grindPrice = grid * (position) + intPrice;
                         int step = new Double((lastPrice - grindPrice) / grid).intValue();
@@ -145,7 +148,7 @@ public class TraderGFService implements InitializingBean {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    log.info(e.getMessage());
+                    //log.info(e.getMessage());
                     log.info("sleep to 5 sec");
                     try {
                         Thread.sleep(5000);
@@ -153,58 +156,19 @@ public class TraderGFService implements InitializingBean {
                         e1.printStackTrace();
                     }
                 } finally {
-                }
-
-                long speed = (System.currentTimeMillis() - start);
-                if (speed > 1000) {
-                    log.info("use ms:" + (System.currentTimeMillis() - start));
+                    long speed = (System.currentTimeMillis() - start);
+                    if (speed > 2000) {
+                         log.info("use ms:[" + speed+"] fundCode["+fundCode+"] lastPrice["+lastPrice+"]");
+                    }
                 }
             }
         } else {
+            log.info("sleep to 10 min");
             try {
                 Thread.sleep(1000 * 60 * 10); //sleep 10 min
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-
-
     }
-
-
-/*    @Scheduled(cron = "0 1 0 ? * MON-FRI")
-    private void checkIsHoliday(){
-        String today = DateUtils.formatDate(new Date(),"yyyy-MM-dd");
-        String[] holidays ={"2016-06-09","2016-06-10","2016-19-15","2016-09-16","2016-10-03","2016-10-04","2016-10-05","2016-10-06","2016-10-07"};
-        for(String str : holidays){
-            if(str.equals(today)){
-                this.isHoliday = true;
-                break;
-            }
-        }
-        this.isHoliday=false;
-    }*/
-
-    public boolean isTradeDayTimeByMarket() {
-     /*  if (1 == 1) {
-            return true;
-        }*/
-       // if(isHoliday)return false;
-
-        Calendar cal = Calendar.getInstance();
-        int hour = cal.get(Calendar.HOUR_OF_DAY);
-        int minute = cal.get(Calendar.MINUTE);
-        int week = cal.get(Calendar.DAY_OF_WEEK);
-        if (week == 1 || week == 7) {
-            return false;
-        }
-        if (hour < 9 || hour >= 15) {
-            return false;
-        }
-        if (hour == 9 && minute < 15) {
-            return false;
-        }
-        return true;
-    }
-
 }
