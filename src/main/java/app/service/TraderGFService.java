@@ -157,7 +157,7 @@ public class TraderGFService implements InitializingBean {
                     }
                 } finally {
                     long speed = (System.currentTimeMillis() - start);
-                    if (speed > 2000) {
+                    if (speed > 3000) {
                          log.info("use ms:[" + speed+"] fundCode["+fundCode+"] lastPrice["+lastPrice+"]");
                     }
                 }
