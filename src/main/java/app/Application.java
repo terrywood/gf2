@@ -20,6 +20,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 
@@ -31,6 +33,11 @@ public class Application {
 
     public static void main(String[] args) throws Exception {
        SpringApplication.run(Application.class);
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public Executor taskScheduler() {
+        return Executors.newScheduledThreadPool(5);
     }
 
     @Bean
