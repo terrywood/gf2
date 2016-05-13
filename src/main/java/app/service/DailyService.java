@@ -31,15 +31,25 @@ public class DailyService {
         if(holidayService.isTradeDayTimeByMarket()){
             String day =DateUtils.formatDate(new Date(),"yyyyMMdd");
             for(String code :codes){
-                log.info("fetch code["+code+"] data");
+                //log.info("fetch code["+code+"] data");
                 try {
                     String daily = accountService.getDaily(code);
                     if(!StringUtils.isEmpty(daily)){
-                        DailyEntity entity = new DailyEntity();
-                        entity.setContent(daily);
-                        entity.setId(code+"-"+day);
-                        entity.setCode(code);
-                        dailyEntityRepository.save(entity);
+                        String id = code+"-"+day;
+                        DailyEntity obj = dailyEntityRepository.findOne(id);
+                        if(obj ==null){
+                            DailyEntity entity = new DailyEntity();
+                            entity.setContent(daily);
+                            entity.setId(id);
+                            entity.setCode(code);
+                            dailyEntityRepository.save(entity);
+                        }else{
+                            if(!obj.getContent().equals(daily)){
+                                obj.setContent(daily);
+                                dailyEntityRepository.save(obj);
+                            }
+                        }
+
                     }
                 } catch (URISyntaxException e) {
                     e.printStackTrace();

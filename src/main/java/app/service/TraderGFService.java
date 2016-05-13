@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -33,9 +34,11 @@ public class TraderGFService implements InitializingBean {
     @Autowired
     private HolidayService holidayService;
 
+    //ExecutorService service ;
+
     @Override
     public void afterPropertiesSet() throws Exception {
-
+      //  service = Executors.newFixedThreadPool(10);
     }
 
   /*
@@ -58,7 +61,7 @@ public class TraderGFService implements InitializingBean {
                 if (lastPrice > 0d) {
                     double grindPrice = grid * (position) + intPrice;
                     int step = new Double((lastPrice - grindPrice) / grid).intValue();
-                    // System.out.println("lastPrice[" + lastPrice + "] gridPrice[" + grindPrice + "] step[" + step + "]");
+                    log.info("lastPrice[" + lastPrice + "] gridPrice[" + grindPrice + "] step[" + step + "]");
                     if (step > 0) {
                         position += step;
                         if (position > minNet) {
@@ -91,13 +94,13 @@ public class TraderGFService implements InitializingBean {
     @Scheduled(fixedDelay = 1)
     private void check() throws InterruptedException {
         long start = System.currentTimeMillis();
-        if(isTradeDayTimeByMarket()){
+        if(this.holidayService.isTradeDayTimeByMarket()){
             List<GridEntity> list=  gridService.findAll();
-            ExecutorService service = Executors.newFixedThreadPool(list.size());
+
             for (GridEntity entity : list) {
                 service.execute(new Work(entity));
             }
-            service.shutdown();
+           service.shutdown();
             service.awaitTermination(Long.MAX_VALUE, TimeUnit.MINUTES);
         }else{
             try {
@@ -106,17 +109,16 @@ public class TraderGFService implements InitializingBean {
                 e.printStackTrace();
             }
         }
-        log.info("use ms:" + (System.currentTimeMillis() - start));
+        //log.info("use ms:" + (System.currentTimeMillis() - start));
     }
 */
-
 
     @Scheduled(fixedDelay = 1)
     private void check() {
         if (holidayService.isTradeDayTimeByMarket()) {
+            long start = System.currentTimeMillis();
             List<GridEntity> list = gridService.findAll();
             for (GridEntity entity : list) {
-                long start = System.currentTimeMillis();
                 double intPrice = entity.getIntPrice();
                 String fundCode = entity.getFundCode();
                 int position = entity.getPosition();
@@ -147,7 +149,6 @@ public class TraderGFService implements InitializingBean {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    //log.info(e.getMessage());
                     log.info("sleep to 5 sec");
                     try {
                         Thread.sleep(5000);
@@ -155,12 +156,14 @@ public class TraderGFService implements InitializingBean {
                         e1.printStackTrace();
                     }
                 } finally {
-                    long speed = (System.currentTimeMillis() - start);
-                    if (speed > 3000) {
-                         log.info("use ms:[" + speed+"] fundCode["+fundCode+"] lastPrice["+lastPrice+"]");
-                    }
+
                 }
             }
+            long speed = (System.currentTimeMillis() - start);
+
+           // if (speed > 3000) {
+              //  log.info("use ms:[" + speed+"] ");
+           // }
         } else {
             log.info("sleep to 10 min");
             try {
@@ -169,5 +172,7 @@ public class TraderGFService implements InitializingBean {
                 e.printStackTrace();
             }
         }
+
+
     }
 }
