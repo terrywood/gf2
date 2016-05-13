@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -26,7 +27,8 @@ public class DailyService {
 
     private static String[] codes = new String[]{"878002","878003","878004","878005"};
 
-    @Scheduled(cron = "0/30 * 9-16 * * MON-FRI")
+    @Scheduled(cron = "0 0/1 9-16 * * MON-FRI")
+    @Transactional
     public void fetchDaily() {
         if(holidayService.isTradeDayTimeByMarket()){
             String day =DateUtils.formatDate(new Date(),"yyyyMMdd");
@@ -45,8 +47,7 @@ public class DailyService {
                             dailyEntityRepository.save(entity);
                         }else{
                             if(!obj.getContent().equals(daily)){
-                                obj.setContent(daily);
-                                dailyEntityRepository.save(obj);
+                                dailyEntityRepository.updateContent(daily,id);
                             }
                         }
 
