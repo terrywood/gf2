@@ -12,13 +12,20 @@ ${demo.css}
 $(function () {
     var seriesOptions = [],
         seriesCounter = 0,
-        names = ['878002','878004'];
+        names = ['878004'];
 
     /**
      * Create the chart when all data is loaded
      * @returns {undefined}
      */
     function createChart() {
+
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
 
         $('#container').highcharts('StockChart', {
 

@@ -23,8 +23,10 @@ public class HolidayService {
             ,"2016-10-03","2016-10-04","2016-10-05","2016-10-06","2016-10-07"
     };
 
+
     @Cacheable
     public boolean isTradeDayTimeByMarket() {
+        //if(1==1)return  true;
         boolean ret = true;
         Calendar cal = Calendar.getInstance();
         int hour = cal.get(Calendar.HOUR_OF_DAY);

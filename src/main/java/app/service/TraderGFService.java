@@ -121,13 +121,15 @@ public class TraderGFService implements InitializingBean {
             for (GridEntity entity : list) {
                 double intPrice = entity.getIntPrice();
                 String fundCode = entity.getFundCode();
-                int position = entity.getPosition();
+                 int position = entity.getPosition();
                 double grid = entity.getGrid();
                 int minNet = entity.getMinNet();
                 int volume = entity.getVolume();
                 double lastPrice = 0;
                 try {
                     lastPrice = accountService.getLastPrice(entity.getFundCode());
+                    log.info("lastPrice["+lastPrice+"]");
+
                     if (lastPrice > 0d) {
                         double grindPrice = grid * (position) + intPrice;
                         int step = new Double((lastPrice - grindPrice) / grid).intValue();
