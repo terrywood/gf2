@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.List;
@@ -49,10 +50,30 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     private GridTradingRepository gridTradingRepository;
 
     public boolean isLogin = false;
-    Gson gson = new Gson();
-    ConnectionConfig connectionConfig = ConnectionConfig.custom()
-            .setBufferSize(4128)
-            .build();
+    private Gson gson = new Gson();
+
+
+    public  String getDaily(String code) throws URISyntaxException, IOException {
+        if(isLogin){
+            CloseableHttpClient httpclient = HttpClients.custom()
+                    .setDefaultCookieStore(cookieStore)
+                    .setUserAgent(userAgent)
+                    .build();
+            HttpUriRequest login = RequestBuilder.post()
+                    .setUri(new URI(domain + "/entry"))
+                    .addParameter("classname", "com.gf.etrade.control.NXBControl")
+                    .addParameter("method", "queryXBFSHQ")
+                    .addParameter("stock_code", code)
+                    .addParameter("dse_sessionId", dseSessionId)
+                    .build();
+            CloseableHttpResponse response2 = httpclient.execute(login);
+            HttpEntity entity = response2.getEntity();
+            return  EntityUtils.toString(entity);
+        }else {
+            return  null;
+        }
+
+    }
 
     @Override
     public double getLastPrice(String fundCode) throws IOException {
@@ -168,7 +189,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                         EntityUtils.consume(entity);
                         if (MapUtils.getBoolean(map, "success")) {
                             System.out.println("Post logon cookies:");
-                            /*UserSession userSession = new UserSession();
+                            /*DailyEntity userSession = new DailyEntity();
                             userSession.setCookieStore(cookieStore);*/
                             List<Cookie> cookies = cookieStore.getCookies();
                             if (cookies.isEmpty()) {

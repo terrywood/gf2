@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.Date;
 import java.util.Random;
@@ -44,5 +45,10 @@ public class AccountServiceDummy implements AccountService {
         model.setLastNet(lastNet);
         gridTradingRepository.save(model);
         System.out.println(model);
+    }
+
+    @Override
+    public String getDaily(String code) throws URISyntaxException, IOException {
+        return null;
     }
 }

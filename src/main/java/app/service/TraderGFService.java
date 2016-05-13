@@ -113,7 +113,6 @@ public class TraderGFService implements InitializingBean {
 
     @Scheduled(fixedDelay = 1)
     private void check() {
-
         if (holidayService.isTradeDayTimeByMarket()) {
             List<GridEntity> list = gridService.findAll();
             for (GridEntity entity : list) {
