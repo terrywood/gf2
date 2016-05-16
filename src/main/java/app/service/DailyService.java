@@ -27,7 +27,7 @@ public class DailyService {
 
     private static String[] codes = new String[]{"878002","878003","878004","878005"};
 
-    @Scheduled(cron = "0 0/1 9-16 * * MON-FRI")
+    @Scheduled(cron = "0 0/10 9-16 * * MON-FRI")
     @Transactional
     public void fetchDaily() {
         if(holidayService.isTradeDayTimeByMarket()){
@@ -39,7 +39,7 @@ public class DailyService {
                     if(!StringUtils.isEmpty(daily)){
                         String id = code+"-"+day;
                         DailyEntity obj = dailyEntityRepository.findOne(id);
-                        if(obj ==null){
+                        if(obj == null){
                             DailyEntity entity = new DailyEntity();
                             entity.setContent(daily);
                             entity.setId(id);
