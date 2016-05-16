@@ -33,14 +33,11 @@ public class TraderGFService implements InitializingBean {
     private GridService gridService;
     @Autowired
     private HolidayService holidayService;
-
     //ExecutorService service ;
-
     @Override
     public void afterPropertiesSet() throws Exception {
       //  service = Executors.newFixedThreadPool(10);
     }
-
   /*
     class Work implements Runnable{
         GridEntity entity;
@@ -121,7 +118,7 @@ public class TraderGFService implements InitializingBean {
             for (GridEntity entity : list) {
                 double intPrice = entity.getIntPrice();
                 String fundCode = entity.getFundCode();
-                 int position = entity.getPosition();
+                int position = entity.getPosition();
                 double grid = entity.getGrid();
                 int minNet = entity.getMinNet();
                 int volume = entity.getVolume();
@@ -161,7 +158,6 @@ public class TraderGFService implements InitializingBean {
                 }
             }
             long speed = (System.currentTimeMillis() - start);
-
            // if (speed > 3000) {
               //  log.info("use ms:[" + speed+"] ");
            // }
@@ -173,7 +169,5 @@ public class TraderGFService implements InitializingBean {
                 e.printStackTrace();
             }
         }
-
-
     }
 }

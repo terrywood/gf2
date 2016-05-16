@@ -14,7 +14,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.config.ConnectionConfig;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -49,12 +48,13 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     @Autowired
     private GridTradingRepository gridTradingRepository;
 
-    public boolean isLogin = false;
+    public boolean connected = false;
+
     private Gson gson = new Gson();
 
 
     public  String getDaily(String code) throws URISyntaxException, IOException {
-        if(isLogin){
+        if(connected){
             CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
@@ -77,7 +77,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Override
     public double getLastPrice(String fundCode) throws IOException {
-        if (isLogin) {
+        if (connected) {
             String httpUrl = domain + "/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=" + fundCode + "&dse_sessionId=" + dseSessionId;
             CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
@@ -139,6 +139,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     }
 
     public synchronized void login() {
+        if(connected){
+            return;
+        }
         Gson gson = new Gson();
         try {
             long start = System.currentTimeMillis();
@@ -204,7 +207,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                                     //cookieStore.addCookie(cookies.get(i));
                                     System.out.println("- " + cookies.get(i).toString());
                                 }
-                                this.isLogin = true;
+                                this.connected = true;
                                 // this.setUserSession(userSession);
                             }
 
@@ -229,7 +232,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (isLogin == false) {
+        if (connected == false) {
             login();
         }
     }
