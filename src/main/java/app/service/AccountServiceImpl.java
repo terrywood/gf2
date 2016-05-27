@@ -164,7 +164,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                     System.out.println("请输入验证码:");
                     capthca = bufferedReader.readLine();*/
                     CommandUtils.executeCommand("python d:\\gf\\verify.py");
-                    CommandUtils.executeCommand("D:\\gf\\tesseract.exe D:\\gf\\gf_bw.jpg d:\\gf\\code");
+                    CommandUtils.executeCommand("tesseract.exe D:\\gf\\gf_bw.jpg d:\\gf\\code");
                     capthca = StringUtils.trimAllWhitespace(FileUtils.readFileToString(new File("d:\\gf\\code.txt"), Charset.forName("UTF-8")));
                     if (capthca.length() != 5) {
                         System.out.println("error capthca[" + capthca + "] re login");
