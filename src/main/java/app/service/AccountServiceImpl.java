@@ -116,15 +116,14 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
         log.info(httpUrl);
         try {
 
-           /* CloseableHttpClient httpclient = HttpClients.custom()
+            CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
                     .build();
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String result = EntityUtils.toString(response.getEntity());
-            System.out.println(result);*/
-
+            log.info(result);
             GridTrading model = new GridTrading();
             model.setFund(fundCode);
             model.setPrice(lastPrice);
@@ -132,6 +131,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             model.setType(bs);
             model.setAmount(amount);
             model.setLastNet(lastNet);
+            model.setResult(result);
             gridTradingRepository.save(model);
         } catch (Exception e) {
             e.printStackTrace();

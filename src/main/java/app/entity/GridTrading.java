@@ -20,6 +20,8 @@ public class GridTrading {
     private String type;
     private String fund;
     private Integer lastNet;
+    @Column(length = 500)
+    private String result;
 
     @PrePersist
     void prePersist(){
