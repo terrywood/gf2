@@ -22,7 +22,7 @@ public class GridService {
     @Cacheable("gridCache")
     public List<GridEntity> findAll() {
         log.info("GridService find all");
-        return gridEntityRepository.findAll();
+        return gridEntityRepository.findByTrading(true);
     }
 
     @CacheEvict(value = "gridCache", allEntries = true)

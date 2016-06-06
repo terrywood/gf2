@@ -2,12 +2,11 @@ package app.entity;
 
 import lombok.Data;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-/**
- * Created by terry.wu on 2016/4/29 0029.
- */
+
 @Data
 @Entity
 public class GridEntity {
@@ -18,5 +17,7 @@ public class GridEntity {
     private int position;
     private int minNet;
     private int volume;
+    @Column(nullable = false)
+    private boolean trading;
 
 }
