@@ -92,9 +92,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                 APIResult obj = gson.fromJson(result, APIResult.class);
                 return obj.getData().get(0).getLast_price();
             }catch (Exception e){
-                log.info( result);
+                log.info( "parse data exception : "+result);
                 //e.printStackTrace();
-                login();
+                connected = false;
                 return 0d;
             }finally {
                 httpGet.releaseConnection();
