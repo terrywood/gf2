@@ -146,8 +146,8 @@ public class TraderGFService implements InitializingBean {
                         }
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
-                    log.info("sleep to 5 sec");
+                    //e.printStackTrace();
+                    log.info("sleep 5 sec on error: "+ e.getMessage());
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e1) {
