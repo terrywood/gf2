@@ -121,6 +121,7 @@ public class TraderGFService implements InitializingBean {
                 int position = entity.getPosition();
                 double grid = entity.getGrid();
                 int minNet = entity.getMinNet();
+                int maxNet = entity.getMaxNet();
                 int volume = entity.getVolume();
                 double lastPrice = 0;
                 try {
@@ -131,18 +132,18 @@ public class TraderGFService implements InitializingBean {
                         int step = new Double((lastPrice - grindPrice) / grid).intValue();
                         if (step > 0) {
                             position += step;
-                            if (position > minNet) {
+                            if (position > minNet && position <maxNet ) {
                                 accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "2");//sell
-                                entity.setPosition(position);
-                                gridService.save(entity);
                             }
+                            entity.setPosition(position);
+                            gridService.save(entity);
                         } else if (step < 0) {
                             position += step;
-                            if (position >= minNet) {
+                            if (position >= minNet  && position <= maxNet) {
                                 accountService.order(position, fundCode, lastPrice, Math.abs(volume * step), "1"); //buy
-                                entity.setPosition(position);
-                                gridService.save(entity);
                             }
+                            entity.setPosition(position);
+                            gridService.save(entity);
                         }
                     }
                 } catch (IOException e) {

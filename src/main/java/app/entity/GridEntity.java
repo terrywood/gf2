@@ -16,6 +16,7 @@ public class GridEntity {
     private double grid;
     private int position;
     private int minNet;
+    private int maxNet;
     private int volume;
     @Column(nullable = false)
     private boolean trading;
