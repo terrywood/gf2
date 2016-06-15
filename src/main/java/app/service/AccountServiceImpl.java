@@ -53,27 +53,6 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     private Gson gson = new Gson();
 
 
-    public  String getDaily(String code) throws URISyntaxException, IOException {
-        if(connected){
-            CloseableHttpClient httpclient = HttpClients.custom()
-                    .setDefaultCookieStore(cookieStore)
-                    .setUserAgent(userAgent)
-                    .build();
-            HttpUriRequest login = RequestBuilder.post()
-                    .setUri(new URI(domain + "/entry"))
-                    .addParameter("classname", "com.gf.etrade.control.NXBControl")
-                    .addParameter("method", "queryXBFSHQ")
-                    .addParameter("stock_code", code)
-                    .addParameter("dse_sessionId", dseSessionId)
-                    .build();
-            CloseableHttpResponse response2 = httpclient.execute(login);
-            HttpEntity entity = response2.getEntity();
-            return  EntityUtils.toString(entity);
-        }else {
-            return  null;
-        }
-
-    }
 
     @Override
     public double getLastPrice(String fundCode) throws IOException {

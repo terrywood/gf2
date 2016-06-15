@@ -10,5 +10,4 @@ public interface AccountService {
     double getLastPrice(String fundCode) throws IOException;
 
     void order(Integer lastNet, String fundCode, double lastPrice, int amount, String bs);
-     String getDaily(String code) throws URISyntaxException, IOException;
 }

@@ -80,10 +80,6 @@ public class AccountServiceDummy implements AccountService,InitializingBean {
         System.out.println(model);
     }
 
-    @Override
-    public String getDaily(String code) throws URISyntaxException, IOException {
-        return null;
-    }
 
 
 }
