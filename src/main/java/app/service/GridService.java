@@ -31,12 +31,4 @@ public class GridService {
         this.gridEntityRepository.save(obj);
     }
 
-    private void simulateSlowService() {
-        try {
-            long time = 5000L;
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
-    }
 }

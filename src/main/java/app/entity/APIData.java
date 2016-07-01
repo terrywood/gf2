@@ -8,4 +8,6 @@ import lombok.Data;
 @Data
 public class APIData {
     double last_price;
+    double sale_price1;
+    double buy_price1;
 }

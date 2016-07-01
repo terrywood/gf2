@@ -1,5 +1,6 @@
 package app.service;
 
+import app.entity.APIData;
 import app.entity.GridTrading;
 import app.repository.GridTradingRepository;
 import com.google.gson.Gson;
@@ -14,6 +15,7 @@ import java.net.URISyntaxException;
 import java.text.NumberFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -37,6 +39,11 @@ public class AccountServiceDummy implements AccountService,InitializingBean {
         System.out.println("list878004.size()-------------------------");
         System.out.println(list878004.size());
         System.out.println("list878004.size()-------------------------");
+    }
+
+    @Override
+    public Map<String, APIData> getLastPrice(String[] fundCodes) throws IOException {
+        return null;
     }
 
     @Override
@@ -80,6 +87,10 @@ public class AccountServiceDummy implements AccountService,InitializingBean {
         System.out.println(model);
     }
 
+    @Override
+    public void order(String upCode, String downCode, double upPrice, double downPrice, String bs) {
+
+    }
 
 
 }

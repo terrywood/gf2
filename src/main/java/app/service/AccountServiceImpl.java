@@ -1,6 +1,7 @@
 package app.service;
 
 import app.CommandUtils;
+import app.entity.APIData;
 import app.entity.APIResult;
 import app.entity.GridTrading;
 import app.repository.GridTradingRepository;
@@ -10,14 +11,17 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.*;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +33,8 @@ import org.springframework.util.StringUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by terry.wu on 2016/4/29 0029.
@@ -53,29 +54,117 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     private Gson gson = new Gson();
 
 
+    static class GetThread extends Thread {
+        private final CloseableHttpClient httpClient;
+        private final HttpContext context;
+        private final HttpGet httpget;
+        private final int id;
+        private APIData data;
+
+        public APIData getData() {
+            return data;
+        }
+
+        private Gson gson = new Gson();
+
+        public GetThread(CloseableHttpClient httpClient, HttpGet httpget, int id) {
+            this.httpClient = httpClient;
+            this.context = new BasicHttpContext();
+            this.httpget = httpget;
+            this.id = id;
+        }
+
+        @Override
+        public void run() {
+            try {
+                CloseableHttpResponse response = httpClient.execute(httpget, context);
+                String result = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
+                try {
+                    log.info(result);
+                    APIResult obj = gson.fromJson(result, APIResult.class);
+                    APIData apiData = obj.getData().get(0);
+                    this.data = apiData;
+                } catch (Exception e) {
+                    log.info("parse data exception : " + result);
+
+                }
+            } catch (IOException e) {
+                System.out.println(id + " - error: " + e.getMessage());
+            }
+        }
+
+    }
 
     @Override
+    public Map<String, APIData> getLastPrice(String[] fundCodes) throws IOException {
+        Map<String, APIData> ret = new HashMap<>();
+        if (connected) {
+            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
+            cm.setMaxTotal(10);
+            CloseableHttpClient httpclient = HttpClients.custom()
+                    .setDefaultCookieStore(cookieStore)
+                    .setUserAgent(userAgent)
+                    .setConnectionManager(cm).build();
+            try {
+                GetThread[] threads = new GetThread[fundCodes.length];
+                for (int i = 0; i < threads.length; i++) {
+                    String url = domain + "/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=" + fundCodes[i] + "&dse_sessionId=" + dseSessionId;
+                    HttpGet httpget = new HttpGet(url);
+                    threads[i] = new GetThread(httpclient, httpget, i + 1);
+                }
+                for (int j = 0; j < threads.length; j++) {
+                    threads[j].start();
+                }
+                for (int j = 0; j < threads.length; j++) {
+                    threads[j].join();
+                }
+                for (int j = 0; j < threads.length; j++) {
+                    APIData data = threads[j].getData();
+                    if (data == null) {
+                        this.connected = false;
+                        break;
+                    }
+                    ret.put(fundCodes[j], data);
+                }
+                // System.out.println("fund["+fundCodes[0]+"]"+upData);
+                // System.out.println("fund["+fundCodes[1]+"]"+downData);
+            } catch (Exception e) {
+
+            } finally {
+
+            }
+
+        } else {
+            System.out.println("gf account is log out");
+            login();
+
+        }
+        //System.out.println(ret);
+        return ret;
+    }
+
+
     public double getLastPrice(String fundCode) throws IOException {
         if (connected) {
             String httpUrl = domain + "/entry?classname=com.gf.etrade.control.NXBUF2Control&method=nxbQueryPrice&fund_code=" + fundCode + "&dse_sessionId=" + dseSessionId;
             CloseableHttpClient httpclient = HttpClients.custom()
                     .setDefaultCookieStore(cookieStore)
                     .setUserAgent(userAgent)
-                  //  .setDefaultConnectionConfig(connectionConfig)
+                    //  .setDefaultConnectionConfig(connectionConfig)
                     .build();
             HttpGet httpGet = new HttpGet(httpUrl);
             CloseableHttpResponse response = httpclient.execute(httpGet);
             String result = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
-          //  System.out.println("gf account result:" + result);
+            //  System.out.println("gf account result:" + result);
             try {
                 APIResult obj = gson.fromJson(result, APIResult.class);
                 return obj.getData().get(0).getLast_price();
-            }catch (Exception e){
-                log.info( "parse data exception : "+result);
+            } catch (Exception e) {
+                log.info("parse data exception : " + result);
                 //e.printStackTrace();
                 connected = false;
                 return 0d;
-            }finally {
+            } finally {
                 httpGet.releaseConnection();
                 httpclient.close();
             }
@@ -116,9 +205,43 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
             e.printStackTrace();
         }
     }
+    @Override
+    public void order(String upCode, String downCode, double upPrice, double downPrice, String bs) {
+        CloseableHttpClient httpclient = HttpClients.custom()
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(userAgent)
+                .build();
+
+        CloseableHttpResponse response = null;
+        try {
+            HttpPost httpPost = new HttpPost(domain + "/entry");
+            List<NameValuePair> formparams = new ArrayList<NameValuePair>();
+            formparams.add(new BasicNameValuePair("classname", "com.gf.etrade.control.NXBUF2Control"));
+            formparams.add(new BasicNameValuePair("method", "nxbdoubleentrust"));
+            formparams.add(new BasicNameValuePair("dse_sessionId", dseSessionId));
+            formparams.add(new BasicNameValuePair("fund_code", upCode));
+            formparams.add(new BasicNameValuePair("entrust_amount", "1000"));
+            formparams.add(new BasicNameValuePair("entrust_price", String.valueOf(upPrice)));
+            formparams.add(new BasicNameValuePair("fund_code_1", downCode));
+            formparams.add(new BasicNameValuePair("entrust_amount_1", "1000"));
+            formparams.add(new BasicNameValuePair("entrust_price_1", String.valueOf(downPrice)));
+            formparams.add(new BasicNameValuePair("entrust_bs", bs));
+            UrlEncodedFormEntity entity = new UrlEncodedFormEntity(formparams, Consts.UTF_8);
+            httpPost.setEntity(entity);
+            response = httpclient.execute(httpPost);
+            String responseBody = IOUtils.toString(response.getEntity().getContent(), Consts.UTF_8);
+            log.info("upCode["+downCode+"][" + upPrice + "] downCode["+downCode+"][" + downPrice + "]");
+            log.info(responseBody);
+            EntityUtils.consume(entity);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+
+        }
+    }
 
     public synchronized void login() {
-        if(connected){
+        if (connected) {
             return;
         }
         Gson gson = new Gson();
@@ -147,7 +270,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                     capthca = StringUtils.trimAllWhitespace(FileUtils.readFileToString(new File("d:\\gf\\code.txt"), Charset.forName("UTF-8")));
                     if (capthca.length() != 5) {
                         System.out.println("error capthca[" + capthca + "] re login");
-                        return ;
+                        return;
                     }
                     HttpUriRequest login = RequestBuilder.post()
                             .setUri(new URI(domain + "/login"))
